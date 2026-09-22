@@ -1,9 +1,770 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-store"><title>Products | RastriyaSenaa Store Admin</title><link rel="stylesheet" href="../css/style.css"></head><body><div class="admin-shell"><aside class="sidebar"><a class="logo" href="../index.html"><span class="logo-mark">RS</span>RastriyaSenaa</a><a class="side-link" href="index.html">Dashboard</a><a class="side-link active" href="products.html">Products</a><a class="side-link" href="orders.html">Orders</a><a class="side-link" href="admins.html">Admins</a><a class="side-link" href="settings.html">Settings</a></aside><main class="admin-main"><div class="admin-top"><div><h1 style="margin:0">Products</h1><span class="muted">Add products with secure Google Drive image upload</span></div><button class="btn btn-dark" id="logoutBtn">Logout</button><button class="btn btn-primary" onclick="document.getElementById('modal').classList.add('open')">+ Add Product</button></div><div class="table-wrap"><table><thead><tr><th>ID</th><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Status</th></tr></thead><tbody id="rows"></tbody></table></div></main></div>
-<div id="modal" class="modal"><div class="modal-card"><h2>Add Product</h2><form id="productForm"><div class="form-grid"><div><label>Product Name</label><input id="pname" class="input" required></div><div><label>Category</label><input id="pcat" class="input" required></div><div><label>Price</label><input id="pprice" class="input" type="number" min="0" required></div><div><label>Discount Price</label><input id="pdiscount" class="input" type="number" min="0"></div><div><label>Stock</label><input id="pstock" class="input" type="number" min="0" required></div><div><label>Badge</label><input id="pbadge" class="input" placeholder="New / Bestseller"></div><div class="full"><label>Product Image</label><input id="pimage" class="input" type="file" accept="image/jpeg,image/png,image/webp,image/gif" required><small class="muted">Max 5 MB.</small><div id="preview" style="margin-top:10px"></div></div><div class="full"><label>Description</label><textarea id="pdesc" class="textarea" rows="3"></textarea></div><div class="full"><button class="btn btn-primary" id="saveBtn">Upload & Save Product</button><button type="button" class="btn btn-outline" onclick="document.getElementById('modal').classList.remove('open')">Cancel</button></div><div class="full"><p id="msg"></p></div></div></form></div></div>
-<script src="../js/app.js"></script><script>
-(function(){const s=requireAdmin();if(!s)return;document.getElementById('logoutBtn').onclick=logoutAdmin;const file=document.getElementById('pimage'),preview=document.getElementById('preview');file.addEventListener('change',()=>{const f=file.files[0];if(f)preview.innerHTML='<img src="'+URL.createObjectURL(f)+'" style="width:110px;height:110px;object-fit:cover;border-radius:10px;border:1px solid #e5e7eb">';});
-async function refresh(){const ps=await loadProducts();document.getElementById('rows').innerHTML=ps.map(p=>'<tr><td>'+p.id+'</td><td><b>'+p.name+'</b></td><td>'+p.category+'</td><td>'+money(p.discount||p.price)+'</td><td>'+p.stock+'</td><td>'+String(p.status||'Active')+'</td></tr>').join('');}
-refresh();
-document.getElementById('productForm').onsubmit=async function(e){e.preventDefault();const msg=document.getElementById('msg'),btn=document.getElementById('saveBtn'),f=file.files[0];if(!f){msg.textContent='Image select karein.';return}btn.disabled=true;btn.textContent='Uploading...';try{const up=await uploadProductImage(f);await apiPost({action:'createProduct',token:adminToken(),product:{name:document.getElementById('pname').value,category:document.getElementById('pcat').value,price:Number(document.getElementById('pprice').value),discount:Number(document.getElementById('pdiscount').value)||'',stock:Number(document.getElementById('pstock').value)||0,image:up.url,description:document.getElementById('pdesc').value,badge:document.getElementById('pbadge').value,status:'Active'}});msg.textContent='Product successfully added.';e.target.reset();preview.innerHTML='';await refresh();setTimeout(()=>document.getElementById('modal').classList.remove('open'),600)}catch(err){msg.textContent=err.message}finally{btn.disabled=false;btn.textContent='Upload & Save Product'}};
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Cache-Control" content="no-store">
+  <title>Products | RastriyaSenaa Store Admin</title>
+
+  <link rel="stylesheet" href="../css/style.css">
+
+  <style>
+    .category-select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #dbe2ea;
+      border-radius: 10px;
+      background: #fff;
+      color: #111827;
+      font-size: 15px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .category-select:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37,99,235,.10);
+    }
+
+    .category-select option {
+      padding: 10px;
+    }
+
+    .product-thumb {
+      width: 45px;
+      height: 45px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .status-active {
+      color: #15803d;
+      font-weight: 600;
+    }
+
+    .status-inactive {
+      color: #dc2626;
+      font-weight: 600;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="admin-shell">
+
+  <aside class="sidebar">
+    <a class="logo" href="../index.html">
+      <span class="logo-mark">RS</span>
+      RastriyaSenaa
+    </a>
+
+    <a class="side-link" href="index.html">Dashboard</a>
+    <a class="side-link active" href="products.html">Products</a>
+    <a class="side-link" href="orders.html">Orders</a>
+    <a class="side-link" href="admins.html">Admins</a>
+    <a class="side-link" href="settings.html">Settings</a>
+  </aside>
+
+  <main class="admin-main">
+
+    <div class="admin-top">
+
+      <div>
+        <h1 style="margin:0">Products</h1>
+        <span class="muted">
+          Add products with secure Google Drive image upload
+        </span>
+      </div>
+
+      <button class="btn btn-dark" id="logoutBtn">
+        Logout
+      </button>
+
+      <button
+        class="btn btn-primary"
+        onclick="document.getElementById('modal').classList.add('open')">
+        + Add Product
+      </button>
+
+    </div>
+
+
+    <!-- PRODUCTS TABLE -->
+
+    <div class="table-wrap">
+
+      <table>
+
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Product</th>
+            <th>Category</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+
+        <tbody id="rows">
+          <tr>
+            <td colspan="6" style="text-align:center">
+              Loading products...
+            </td>
+          </tr>
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </main>
+
+</div>
+
+
+<!-- ADD PRODUCT MODAL -->
+
+<div id="modal" class="modal">
+
+  <div class="modal-card">
+
+    <h2>Add Product</h2>
+
+    <form id="productForm">
+
+      <div class="form-grid">
+
+        <!-- PRODUCT NAME -->
+
+        <div>
+          <label>Product Name</label>
+
+          <input
+            id="pname"
+            class="input"
+            type="text"
+            placeholder="Enter product name"
+            required>
+        </div>
+
+
+        <!-- CATEGORY DROPDOWN -->
+
+        <div>
+
+          <label>Category</label>
+
+          <select
+            id="pcat"
+            class="category-select"
+            required>
+
+            <option value="">
+              Select Category
+            </option>
+
+            <option value="Ambedkar Jayanti">
+              Ambedkar Jayanti
+            </option>
+
+            <option value="Mahapurush">
+              Mahapurush
+            </option>
+
+            <option value="Rally">
+              Rally
+            </option>
+
+            <option value="Constitution">
+              Constitution
+            </option>
+
+            <option value="Social Awareness">
+              Social Awareness
+            </option>
+
+            <option value="T-Shirts">
+              T-Shirts
+            </option>
+
+            <option value="Posters">
+              Posters
+            </option>
+
+            <option value="Stickers">
+              Stickers
+            </option>
+
+            <option value="Books">
+              Books
+            </option>
+
+            <option value="Other">
+              Other
+            </option>
+
+          </select>
+
+        </div>
+
+
+        <!-- PRICE -->
+
+        <div>
+
+          <label>Price</label>
+
+          <input
+            id="pprice"
+            class="input"
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="₹ Price"
+            required>
+
+        </div>
+
+
+        <!-- DISCOUNT -->
+
+        <div>
+
+          <label>Discount Price</label>
+
+          <input
+            id="pdiscount"
+            class="input"
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="₹ Discount Price">
+
+        </div>
+
+
+        <!-- STOCK -->
+
+        <div>
+
+          <label>Stock</label>
+
+          <input
+            id="pstock"
+            class="input"
+            type="number"
+            min="0"
+            placeholder="Available stock"
+            required>
+
+        </div>
+
+
+        <!-- BADGE -->
+
+        <div>
+
+          <label>Badge</label>
+
+          <input
+            id="pbadge"
+            class="input"
+            type="text"
+            placeholder="New / Bestseller">
+
+        </div>
+
+
+        <!-- IMAGE -->
+
+        <div class="full">
+
+          <label>Product Image</label>
+
+          <input
+            id="pimage"
+            class="input"
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            required>
+
+          <small class="muted">
+            JPG, PNG, WEBP or GIF — Maximum 5 MB
+          </small>
+
+          <div id="preview" style="margin-top:10px"></div>
+
+        </div>
+
+
+        <!-- DESCRIPTION -->
+
+        <div class="full">
+
+          <label>Description</label>
+
+          <textarea
+            id="pdesc"
+            class="textarea"
+            rows="4"
+            placeholder="Enter product description"></textarea>
+
+        </div>
+
+
+        <!-- BUTTONS -->
+
+        <div class="full">
+
+          <button
+            type="submit"
+            class="btn btn-primary"
+            id="saveBtn">
+            Upload & Save Product
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-outline"
+            id="cancelBtn">
+            Cancel
+          </button>
+
+        </div>
+
+
+        <!-- MESSAGE -->
+
+        <div class="full">
+
+          <p id="msg"></p>
+
+        </div>
+
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
+
+
+<script src="../js/app.js"></script>
+
+<script>
+
+(function(){
+
+  /* =========================
+     ADMIN CHECK
+  ========================= */
+
+  const s = requireAdmin();
+
+  if(!s) return;
+
+
+  /* =========================
+     LOGOUT
+  ========================= */
+
+  document.getElementById("logoutBtn").onclick = logoutAdmin;
+
+
+  /* =========================
+     MODAL CLOSE
+  ========================= */
+
+  document.getElementById("cancelBtn").onclick = function(){
+
+    document.getElementById("modal").classList.remove("open");
+
+  };
+
+
+  /* =========================
+     IMAGE PREVIEW
+  ========================= */
+
+  const file =
+    document.getElementById("pimage");
+
+  const preview =
+    document.getElementById("preview");
+
+
+  file.addEventListener("change", function(){
+
+    const f = file.files[0];
+
+    preview.innerHTML = "";
+
+    if(!f) return;
+
+
+    /* File size check */
+
+    if(f.size > 5 * 1024 * 1024){
+
+      alert("Image size 5 MB se zyada nahi honi chahiye.");
+
+      file.value = "";
+
+      return;
+    }
+
+
+    /* Preview */
+
+    const img = document.createElement("img");
+
+    img.src = URL.createObjectURL(f);
+
+    img.style.width = "110px";
+    img.style.height = "110px";
+    img.style.objectFit = "cover";
+    img.style.borderRadius = "10px";
+    img.style.border = "1px solid #e5e7eb";
+
+    preview.appendChild(img);
+
+  });
+
+
+  /* =========================
+     LOAD PRODUCTS
+  ========================= */
+
+  async function refresh(){
+
+    const rows =
+      document.getElementById("rows");
+
+    try{
+
+      rows.innerHTML =
+        '<tr><td colspan="6" style="text-align:center">Loading products...</td></tr>';
+
+
+      const ps = await loadProducts();
+
+
+      if(!ps || !ps.length){
+
+        rows.innerHTML =
+          '<tr><td colspan="6" style="text-align:center">No products found.</td></tr>';
+
+        return;
+      }
+
+
+      rows.innerHTML = ps.map(function(p){
+
+        const status =
+          String(p.status || "Active");
+
+
+        const statusClass =
+          status.toLowerCase() === "active"
+          ? "status-active"
+          : "status-inactive";
+
+
+        return `
+          <tr>
+
+            <td>${escapeHtml(p.id || "")}</td>
+
+            <td>
+              <div style="display:flex;align-items:center;gap:10px">
+
+                ${
+                  p.image
+                  ? `<img
+                      src="${escapeHtml(p.image)}"
+                      class="product-thumb"
+                      onerror="this.style.display='none'">`
+                  : ""
+                }
+
+                <b>${escapeHtml(p.name || "")}</b>
+
+              </div>
+            </td>
+
+            <td>
+              ${escapeHtml(p.category || "")}
+            </td>
+
+            <td>
+              ${money(p.discount || p.price)}
+            </td>
+
+            <td>
+              ${escapeHtml(String(p.stock ?? 0))}
+            </td>
+
+            <td class="${statusClass}">
+              ${escapeHtml(status)}
+            </td>
+
+          </tr>
+        `;
+
+      }).join("");
+
+
+    }catch(err){
+
+      console.error(err);
+
+      rows.innerHTML = `
+        <tr>
+          <td colspan="6"
+              style="text-align:center;color:#dc2626">
+            Products load nahi ho rahe: ${escapeHtml(err.message)}
+          </td>
+        </tr>
+      `;
+
+    }
+
+  }
+
+
+  /* =========================
+     HTML ESCAPE
+  ========================= */
+
+  function escapeHtml(value){
+
+    return String(value ?? "")
+      .replace(/&/g,"&amp;")
+      .replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;")
+      .replace(/'/g,"&#039;");
+
+  }
+
+
+  /* =========================
+     INITIAL LOAD
+  ========================= */
+
+  refresh();
+
+
+  /* =========================
+     ADD PRODUCT
+  ========================= */
+
+  document.getElementById("productForm").onsubmit =
+  async function(e){
+
+    e.preventDefault();
+
+
+    const msg =
+      document.getElementById("msg");
+
+    const btn =
+      document.getElementById("saveBtn");
+
+    const f =
+      file.files[0];
+
+
+    msg.textContent = "";
+
+
+    /* Image check */
+
+    if(!f){
+
+      msg.textContent =
+        "Product image select karein.";
+
+      return;
+    }
+
+
+    /* Image size */
+
+    if(f.size > 5 * 1024 * 1024){
+
+      msg.textContent =
+        "Image 5 MB se zyada hai.";
+
+      return;
+    }
+
+
+    /* Category check */
+
+    const category =
+      document.getElementById("pcat").value;
+
+
+    if(!category){
+
+      msg.textContent =
+        "Please category select karein.";
+
+      return;
+    }
+
+
+    try{
+
+      btn.disabled = true;
+
+      btn.textContent =
+        "Uploading...";
+
+
+      /* =========================
+         UPLOAD IMAGE
+      ========================= */
+
+      const up =
+        await uploadProductImage(f);
+
+
+      if(!up || !up.url){
+
+        throw new Error(
+          "Image upload failed."
+        );
+
+      }
+
+
+      /* =========================
+         CREATE PRODUCT
+      ========================= */
+
+      const response =
+        await apiPost({
+
+          action: "createProduct",
+
+          token: adminToken(),
+
+          product: {
+
+            name:
+              document.getElementById("pname").value.trim(),
+
+            category:
+              category,
+
+            price:
+              Number(
+                document.getElementById("pprice").value
+              ),
+
+            discount:
+              Number(
+                document.getElementById("pdiscount").value
+              ) || "",
+
+            stock:
+              Number(
+                document.getElementById("pstock").value
+              ) || 0,
+
+            image:
+              up.url,
+
+            description:
+              document.getElementById("pdesc").value.trim(),
+
+            badge:
+              document.getElementById("pbadge").value.trim(),
+
+            status:
+              "Active"
+
+          }
+
+        });
+
+
+      if(!response || response.ok === false){
+
+        throw new Error(
+          response?.error ||
+          "Product save failed."
+        );
+
+      }
+
+
+      /* =========================
+         SUCCESS
+      ========================= */
+
+      msg.style.color = "#15803d";
+
+      msg.textContent =
+        "Product successfully added.";
+
+
+      /* Reset */
+
+      e.target.reset();
+
+      preview.innerHTML = "";
+
+
+      /* Reload products */
+
+      await refresh();
+
+
+      /* Close modal */
+
+      setTimeout(function(){
+
+        document
+          .getElementById("modal")
+          .classList.remove("open");
+
+        msg.textContent = "";
+
+      },800);
+
+
+    }catch(err){
+
+      console.error(err);
+
+      msg.style.color = "#dc2626";
+
+      msg.textContent =
+        err.message ||
+        "Product add nahi ho paya.";
+
+    }finally{
+
+      btn.disabled = false;
+
+      btn.textContent =
+        "Upload & Save Product";
+
+    }
+
+  };
+
+
 })();
-</script></body></html>
+
+</script>
+
+</body>
+</html>
