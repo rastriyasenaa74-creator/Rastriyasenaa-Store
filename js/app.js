@@ -1,5 +1,5 @@
 
-const API_URL = ""; // Paste deployed Google Apps Script Web App URL here // Paste your deployed Google Apps Script Web App URL here.
+const API_URL = "https://script.google.com/macros/s/AKfycbwr1tsVD-_dFZEFLnNR-ZMSSATqT4RpfB9rSXGEKuNiM4n-yMxcjj9yQF7Qvto-VmT70A/exec"; // Paste deployed Google Apps Script Web App URL here // Paste your deployed Google Apps Script Web App URL here.
 const DEMO_PRODUCTS = [
  {id:"RS001",name:"Jai Bhim Premium T-Shirt",category:"Clothing",price:499,discount:399,stock:25,badge:"Bestseller",icon:"👕"},
  {id:"RS002",name:"Dr. B. R. Ambedkar Wall Poster",category:"Posters",price:199,discount:149,stock:40,badge:"Popular",icon:"🖼️"},
