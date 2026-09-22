@@ -1,0 +1,24 @@
+<!doctype html><html><head><meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><script>
+(function(){
+  try{
+    const raw=localStorage.getItem('rs_admin');
+    if(!raw) { window.location.replace('login.html'); return; }
+    const a=JSON.parse(raw);
+    if(!a || !a.username){ localStorage.removeItem('rs_admin'); window.location.replace('login.html'); }
+  }catch(e){
+    localStorage.removeItem('rs_admin');
+    window.location.replace('login.html');
+  }
+})();
+</script><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admins | Admin</title><link rel="stylesheet" href="../css/style.css"></head><body><div class="admin-shell"><aside class="sidebar"><a class="logo" href="../index.html"><span class="logo-mark">RS</span>RastriyaSenaa</a><a class="side-link" href="index.html">Dashboard</a><a class="side-link" href="products.html">Products</a><a class="side-link" href="orders.html">Orders</a><a class="side-link active" href="admins.html">Admins</a><a class="side-link" href="settings.html">Settings</a></aside><main class="admin-main"><h1>Admin Management</h1><div class="form-card"><h3>Super Admin</h3><p class="muted">Full control: products, orders, admins, settings.</p><hr><h3>Normal Admin</h3><p class="muted">Product and order management according to assigned permissions.</p><button class="btn btn-primary" onclick="document.getElementById('addAdmin').classList.add('open')">+ Add Admin</button>
+<div id="addAdmin" class="modal"><div class="modal-card"><h2>Create Admin ID</h2><form id="addAdminForm"><div class="form-grid"><div><label>Admin ID</label><input id="newUser" class="input" required></div><div><label>Password</label><input id="newPass" class="input" type="password" required></div><div><label>Role</label><select id="newRole" class="select"><option value="admin">Admin</option><option value="superadmin">Super Admin</option></select></div><div class="full"><label>Permissions</label><input id="perms" class="input" value="products,orders"></div><div class="full"><button class="btn btn-primary">Create Admin</button> <button type="button" class="btn btn-outline" onclick="document.getElementById('addAdmin').classList.remove('open')">Cancel</button></div></div><p id="adminMsg"></p></form></div></div>
+<script>
+document.getElementById('addAdminForm').onsubmit=async e=>{
+ e.preventDefault(); const msg=document.getElementById('adminMsg');
+ if(!window.API_URL){msg.textContent='पहले API URL सेट करें।';return}
+ try{
+  const r=await fetch(window.API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'createAdmin',token:adminToken(),admin:{username:newUser.value,password:newPass.value,role:newRole.value,permissions:perms.value}})});
+  const x=await r.json(); msg.textContent=x.ok?'Admin created successfully':(x.error||'Failed');
+ }catch(err){msg.textContent=err.message}
+}
+</script></div></main></div></body></html>

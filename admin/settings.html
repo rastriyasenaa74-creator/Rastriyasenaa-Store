@@ -1,0 +1,13 @@
+<!doctype html><html><head><meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><script>
+(function(){
+  try{
+    const raw=localStorage.getItem('rs_admin');
+    if(!raw) { window.location.replace('login.html'); return; }
+    const a=JSON.parse(raw);
+    if(!a || !a.username){ localStorage.removeItem('rs_admin'); window.location.replace('login.html'); }
+  }catch(e){
+    localStorage.removeItem('rs_admin');
+    window.location.replace('login.html');
+  }
+})();
+</script><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Settings | Admin</title><link rel="stylesheet" href="../css/style.css"></head><body><div class="admin-shell"><aside class="sidebar"><a class="logo" href="../index.html"><span class="logo-mark">RS</span>RastriyaSenaa</a><a class="side-link" href="index.html">Dashboard</a><a class="side-link" href="products.html">Products</a><a class="side-link" href="orders.html">Orders</a><a class="side-link" href="admins.html">Admins</a><a class="side-link active" href="settings.html">Settings</a></aside><main class="admin-main"><h1>Store Settings</h1><div class="form-card"><div class="form-grid"><div><label>Store Name</label><input class="input" value="RastriyaSenaa Store"></div><div><label>Support Mobile</label><input class="input" placeholder="+91..."></div><div class="full"><label>Google Apps Script API URL</label><input class="input" placeholder="https://script.google.com/macros/s/.../exec"></div></div><br><button class="btn btn-primary" onclick="alert('Save after API integration.')">Save Settings</button></div></main></div></body></html>
