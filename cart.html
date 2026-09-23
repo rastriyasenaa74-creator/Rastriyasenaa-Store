@@ -1,17 +1,57 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Cart | RastriyaSenaa Store</title><link rel="stylesheet" href="css/style.css"></head><body>
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-store"><title>Cart | RastriyaSenaa Store</title><link rel="stylesheet" href="css/style.css"></head>
+<body>
 <div class="topbar"><div class="container row"><span>Jai Bhim • Quality Products • Secure Shopping</span><span>Support: +91 XXXXX XXXXX</span></div></div>
-<header class="header"><div class="container header-row"><a class="logo" href="index.html"><span class="logo-mark">RS</span>RastriyaSenaa Store</a>
-<nav class="nav"><a class="" href="index.html">Home</a><a class="active" href="products.html">Shop</a><a class="" href="categories.html">Categories</a><a class="" href="about.html">About</a><a class="" href="contact.html">Contact</a></nav><div class="actions"><a class="icon-btn desktop" href="login.html">Login</a><a class="icon-btn" href="cart.html">🛒<span class="badge" data-cart-count>0</span></a><button class="icon-btn menu-btn">☰</button></div></div></header>
-<section class="page-hero"><div class="container"><h1>Your Cart</h1><p class="muted">Order details review karein.</p></div></section><section class="section"><div class="container" style="display:grid;grid-template-columns:1fr 330px;gap:22px"><div id="cart"></div><div class="summary"><h3>Order Summary</h3><div class="summary-line"><span>Subtotal</span><b id="subtotal">₹0</b></div><div class="summary-line"><span>Shipping</span><b>Calculated at checkout</b></div><div class="summary-total"><span>Total</span><span id="total">₹0</span></div><a class="btn btn-primary" style="width:100%;margin-top:16px" href="checkout.html">Proceed to Checkout</a></div></div></section>
+<header class="header"><div class="container header-row"><a class="logo" href="index.html"><span class="logo-mark">RS</span>RastriyaSenaa Store</a><nav class="nav"><a href="index.html">Home</a><a class="active" href="products.html">Shop</a><a href="categories.html">Categories</a><a href="about.html">About</a><a href="contact.html">Contact</a></nav><div class="actions"><a class="icon-btn desktop" href="login.html">Login</a><a class="icon-btn" href="cart.html">🛒<span class="badge" data-cart-count>0</span></a><button class="icon-btn menu-btn">☰</button></div></div></header>
+
+<section class="page-hero"><div class="container"><h1>Your Cart</h1><p class="muted">Order details review karein.</p></div></section>
+
+<section class="section"><div class="container" style="display:grid;grid-template-columns:1fr 330px;gap:22px">
+<div id="cart"></div>
+<div class="summary"><h3>Order Summary</h3><div class="summary-line"><span>Subtotal</span><b id="subtotal">₹0</b></div><div class="summary-line"><span>Shipping</span><b>Calculated at checkout</b></div><div class="summary-total"><span>Total</span><span id="total">₹0</span></div><button id="checkoutBtn" class="btn btn-primary" style="width:100%;margin-top:16px">Proceed to Checkout</button><p class="muted" style="font-size:12px;margin-top:10px">Delivery ke liye naam, mobile, address, city aur PIN checkout par required honge.</p></div>
+</div></section>
+
+<footer class="footer"><div class="container footer-grid"><div><div class="logo"><span class="logo-mark">RS</span>RastriyaSenaa Store</div><p>Bahujan Mahapurush, Jayanti, Rally aur social-awareness related products ke liye professional online store.</p></div><div><h4>Shop</h4><a href="products.html">All Products</a><a href="categories.html">Categories</a><a href="cart.html">Cart</a></div><div><h4>Information</h4><a href="about.html">About Us</a><a href="contact.html">Contact</a><a href="terms.html">Terms</a></div><div><h4>Account</h4><a href="login.html">Login</a><a href="orders.html">My Orders</a></div></div><div class="container copyright">© <span data-year></span> RastriyaSenaa Store. All rights reserved.</div></footer>
+
+<!-- IMPORTANT: app.js MUST load before the cart script -->
+<script src="js/app.js"></script>
 <script>
-function renderCart(){const c=getCart(),el=document.getElementById("cart");if(!c.length){el.innerHTML='<div class="empty"><h3>Your cart is empty</h3><a class="btn btn-dark" href="products.html">Continue Shopping</a></div>';return}
-let total=0;el.innerHTML=c.map(x=>{total+=x.price*x.qty;return `<div class="cart-row"><div><b>${x.icon||"🛍️"} ${x.name}</b><div class="muted">${money(x.price)} each</div></div><div><button class="btn btn-outline btn-sm" onclick="changeQty('${x.id}',-1)">−</button> ${x.qty} <button class="btn btn-outline btn-sm" onclick="changeQty('${x.id}',1)">+</button></div><b>${money(x.price*x.qty)}</b><button class="icon-btn" onclick="removeFromCart('${x.id}')">×</button></div>`}).join("");document.getElementById("subtotal").textContent=money(total);document.getElementById("total").textContent=money(total)}
-renderCart()
+function renderCart() {
+  const c = getCart();
+  const el = document.getElementById("cart");
+
+  if (!c.length) {
+    el.innerHTML = '<div class="empty"><h3>Your cart is empty</h3><p class="muted">Pehle koi product cart me add karein.</p><a class="btn btn-dark" href="products.html">Continue Shopping</a></div>';
+    document.getElementById("subtotal").textContent = "₹0";
+    document.getElementById("total").textContent = "₹0";
+    document.getElementById("checkoutBtn").disabled = true;
+    return;
+  }
+
+  let total = 0;
+  el.innerHTML = c.map(x => {
+    const line = Number(x.price || 0) * Number(x.qty || 0);
+    total += line;
+    const image = x.image ? '<img src="' + x.image + '" alt="" style="width:70px;height:70px;object-fit:cover;border-radius:10px">' : '<span style="font-size:32px">' + (x.icon || "🛍️") + '</span>';
+
+    return '<div class="cart-row"><div style="display:flex;align-items:center;gap:12px">' + image + '<div><b>' + x.name + '</b><div class="muted">' + money(x.price) + ' each</div></div></div><div><button class="btn btn-outline btn-sm" onclick="changeQty(\'' + x.id + '\',-1)">−</button> <span style="display:inline-block;min-width:28px;text-align:center">' + x.qty + '</span> <button class="btn btn-outline btn-sm" onclick="changeQty(\'' + x.id + '\',1)">+</button></div><b>' + money(line) + '</b><button class="icon-btn" onclick="removeFromCart(\'' + x.id + '\')">×</button></div>';
+  }).join("");
+
+  document.getElementById("subtotal").textContent = money(total);
+  document.getElementById("total").textContent = money(total);
+  document.getElementById("checkoutBtn").disabled = false;
+}
+
+document.getElementById("checkoutBtn").addEventListener("click", function() {
+  if (!getCart().length) {
+    alert("Pehle product cart me add karein.");
+    return;
+  }
+  location.href = "checkout.html";
+});
+
+renderCart();
 </script>
-<footer class="footer"><div class="container footer-grid"><div><div class="logo"><span class="logo-mark">RS</span>RastriyaSenaa Store</div><p>Bahujan Mahapurush, Jayanti, Rally aur social-awareness related products ke liye professional online store.</p></div>
-<div><h4>Shop</h4><a href="products.html">All Products</a><a href="categories.html">Categories</a><a href="cart.html">Cart</a></div>
-<div><h4>Information</h4><a href="about.html">About Us</a><a href="contact.html">Contact</a><a href="terms.html">Terms</a></div>
-<div><h4>Account</h4><a href="login.html">Login</a><a href="orders.html">My Orders</a></div></div>
-<div class="container copyright">© <span data-year></span> RastriyaSenaa Store. All rights reserved.</div></footer>
-<script src="js/app.js"></script></body></html>
+</body>
+</html>
