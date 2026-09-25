@@ -124,11 +124,23 @@
     try {
       const result = await apiPost({ action: "createOrder", order: order });
 
-      localStorage.setItem("rs_last_order", JSON.stringify({
+      const savedOrder = {
         ...order,
         orderId: result.orderId || order.orderId,
         status: "Pending"
-      }));
+      };
+      localStorage.setItem("rs_last_order", JSON.stringify(savedOrder));
+
+      let orderHistory = [];
+      try {
+        orderHistory = JSON.parse(localStorage.getItem("rs_orders") || "[]");
+        if (!Array.isArray(orderHistory)) orderHistory = [];
+      } catch(e) {
+        orderHistory = [];
+      }
+      orderHistory.unshift(savedOrder);
+      orderHistory = orderHistory.slice(0, 20);
+      localStorage.setItem("rs_orders", JSON.stringify(orderHistory));
 
       setCart([]);
 
