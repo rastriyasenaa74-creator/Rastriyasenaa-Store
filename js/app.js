@@ -182,3 +182,4 @@ document.addEventListener("DOMContentLoaded", () => {
   updateCartBadge();
   document.querySelectorAll("[data-year]").forEach(e => e.textContent = new Date().getFullYear());
 });
+
