@@ -1,18 +1,16 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-store">
-<title>Checkout | RastriyaSenaa Store</title>
-<link rel="stylesheet" href="css/style.css">
-</head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-store"><title>Checkout | RastriyaSenaa Store</title><link rel="stylesheet" href="css/style.css"></head>
 <body>
 <div class="topbar"><div class="container row"><span>Jai Bhim • Quality Products • Secure Shopping</span><span>Support: +91 XXXXX XXXXX</span></div></div>
 <header class="header"><div class="container header-row"><a class="logo" href="index.html"><span class="logo-mark">RS</span>RastriyaSenaa Store</a><nav class="nav"><a href="index.html">Home</a><a class="active" href="products.html">Shop</a><a href="categories.html">Categories</a><a href="about.html">About</a><a href="contact.html">Contact</a></nav><div class="actions"><a class="icon-btn desktop" href="login.html">Login</a><a class="icon-btn" href="cart.html">🛒<span class="badge" data-cart-count>0</span></a><button class="icon-btn menu-btn">☰</button></div></div></header>
 
 <section class="page-hero"><div class="container"><h1>Checkout</h1><p class="muted">Delivery ke liye customer details bharna zaroori hai.</p></div></section>
+
 <section class="section"><div class="container" style="max-width:850px"><div class="form-card">
-<div class="alert">Online Payment select karne par secure Razorpay Checkout khulega. UPI apps aur available payment methods wahin dikhengi.</div>
+<div class="alert">Customer details ke bina order place nahi hoga. Ye details order ke saath save hongi taaki delivery address available rahe.</div>
 <div id="cartSummary" style="margin:18px 0"></div>
+
 <form id="checkoutForm" class="form-grid">
 <div><label>Full Name *</label><input required minlength="2" class="input" name="name" autocomplete="name"></div>
 <div><label>Mobile *</label><input required pattern="[0-9]{10}" maxlength="10" inputmode="numeric" class="input" name="mobile" autocomplete="tel" placeholder="10 digit mobile"></div>
@@ -20,51 +18,131 @@
 <div class="full"><label>Complete Delivery Address *</label><textarea required minlength="10" class="textarea" name="address" rows="3" placeholder="House/Street/Village, landmark"></textarea></div>
 <div><label>City *</label><input required class="input" name="city" autocomplete="address-level2"></div>
 <div><label>PIN Code *</label><input required pattern="[0-9]{6}" maxlength="6" inputmode="numeric" class="input" name="pin" autocomplete="postal-code"></div>
-<div class="full"><label>Payment Method *</label><select class="select" name="payment" id="paymentMethod" required><option value="Cash on Delivery">Cash on Delivery</option><option value="Online Payment">Online Payment — UPI / QR / Card</option></select></div>
+<div class="full"><label>Payment Method *</label><select class="select" name="payment" id="paymentMethod" required><option value="Cash on Delivery">Cash on Delivery</option><option value="UPI Payment">UPI Payment</option></select></div>
+<div class="full" id="upiBox" style="display:none;text-align:center;border:1px solid #e5e7eb;border-radius:14px;padding:18px;background:#fafafa">
+  <h3 style="margin-top:0">UPI Payment</h3>
+  <p class="muted">QR scan karke exact order amount pay karein.</p>
+  <img id="upiQr" alt="UPI QR Code" style="width:240px;height:240px;object-fit:contain;border-radius:12px;background:#fff;padding:8px">
+  <p><b>UPI ID:</b> 9917617902-7@ybl</p>
+  <p><b>Payable Amount:</b> <span id="upiAmount">₹0</span></p>
+  <div style="max-width:420px;margin:12px auto 0;text-align:left"><label>UTR / Transaction ID *</label><input id="utr" class="input" name="utr" inputmode="numeric" maxlength="35" placeholder="Payment ke baad UTR number dalein"></div>
+  <small class="muted">Payment karne ke baad UTR/Transaction ID zaroor submit karein. Payment manually verify hone ke baad order confirm hoga.</small>
+</div>
 <div class="full"><button id="placeOrderBtn" class="btn btn-primary" type="submit">Place Order</button> <a class="btn btn-outline" href="cart.html">Back to Cart</a></div>
 <div class="full"><p id="msg"></p></div>
-</form></div></div></section>
+</form>
+</div></div></section>
+
 <footer class="footer"><div class="container footer-grid"><div><div class="logo"><span class="logo-mark">RS</span>RastriyaSenaa Store</div><p>Bahujan Mahapurush, Jayanti, Rally aur social-awareness related products ke liye professional online store.</p></div><div><h4>Shop</h4><a href="products.html">All Products</a><a href="categories.html">Categories</a><a href="cart.html">Cart</a></div><div><h4>Information</h4><a href="about.html">About Us</a><a href="contact.html">Contact</a><a href="terms.html">Terms</a></div><div><h4>Account</h4><a href="login.html">Login</a><a href="orders.html">My Orders</a></div></div><div class="container copyright">© <span data-year></span> RastriyaSenaa Store. All rights reserved.</div></footer>
 
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<!-- IMPORTANT: app.js MUST load before checkout script -->
 <script src="js/app.js"></script>
 <script>
-(function(){
-  const cart=getCart(), summary=document.getElementById('cartSummary'), form=document.getElementById('checkoutForm'), btn=document.getElementById('placeOrderBtn'), msg=document.getElementById('msg'), payment=document.getElementById('paymentMethod');
-  if(!cart.length){summary.innerHTML='<div class="empty"><h3>Your cart is empty</h3><p class="muted">Order place karne se pehle product cart me add karein.</p><a class="btn btn-dark" href="products.html">Go to Shop</a></div>';form.style.display='none';return;}
-  const total=cart.reduce((sum,item)=>sum+Number(item.price||0)*Number(item.qty||0),0);
-  summary.innerHTML='<div class="summary"><h3>Order Summary</h3>'+cart.map(item=>'<div class="summary-line"><span>'+escapeHtml(item.name)+' × '+item.qty+'</span><b>'+money(Number(item.price||0)*Number(item.qty||0))+'</b></div>').join('')+'<div class="summary-total"><span>Total</span><span>'+money(total)+'</span></div></div>';
+(function() {
+  const cart = getCart();
+  const summary = document.getElementById("cartSummary");
+  const form = document.getElementById("checkoutForm");
+  const btn = document.getElementById("placeOrderBtn");
+  const paymentMethod = document.getElementById("paymentMethod");
+  const upiBox = document.getElementById("upiBox");
+  const upiQr = document.getElementById("upiQr");
+  const upiAmount = document.getElementById("upiAmount");
+  const utr = document.getElementById("utr");
+  const msg = document.getElementById("msg");
 
-  form.addEventListener('submit',async function(e){
-    e.preventDefault(); msg.textContent=''; msg.style.color='';
-    const fd=new FormData(form), data=Object.fromEntries(fd.entries());
-    if(!/^[0-9]{10}$/.test(data.mobile)){msg.textContent='Mobile number 10 digit ka hona chahiye.';return;}
-    if(!/^[0-9]{6}$/.test(data.pin)){msg.textContent='PIN code 6 digit ka hona chahiye.';return;}
-    btn.disabled=true; btn.textContent=data.payment==='Online Payment'?'Payment Gateway Opening...':'Placing Order...';
-    const order={orderId:'RS'+Date.now(),name:data.name.trim(),email:data.email.trim(),mobile:data.mobile.trim(),address:data.address.trim(),city:data.city.trim(),pin:data.pin.trim(),payment:data.payment,items:cart,total:total,status:'Pending'};
-    try{
-      if(data.payment==='Online Payment'){
-        const created=await apiPost({action:'createRazorpayOrder',order:order});
-        if(!created.ok) throw new Error(created.error||'Payment order create nahi hua.');
-        if(typeof Razorpay==='undefined') throw new Error('Razorpay Checkout load nahi hua. Internet connection check karein.');
-        const rzp=new Razorpay({key:created.keyId,amount:created.amount,currency:created.currency,name:'RastriyaSenaa Store',description:'Order #'+created.orderId,order_id:created.razorpayOrderId,prefill:{name:order.name,email:order.email,contact:order.mobile},notes:{store_order_id:created.orderId},theme:{color:'#111827'},modal:{ondismiss:function(){btn.disabled=false;btn.textContent='Place Order';msg.style.color='#b45309';msg.textContent='Payment window close kar di gayi. Order abhi confirm nahi hua.';}},handler:async function(response){
-          try{
-            btn.textContent='Verifying Payment...';
-            const verified=await apiPost({action:'verifyRazorpayPayment',orderId:created.orderId,razorpay_payment_id:response.razorpay_payment_id,razorpay_order_id:response.razorpay_order_id,razorpay_signature:response.razorpay_signature});
-            if(!verified.ok) throw new Error(verified.error||'Payment verification failed.');
-            localStorage.setItem('rs_last_order',JSON.stringify({...order,orderId:created.orderId,status:'Confirmed',paymentId:response.razorpay_payment_id}));
-            setCart([]); alert('Payment successful!\n\nOrder ID: '+created.orderId+'\nPayment ID: '+response.razorpay_payment_id); location.href='orders.html';
-          }catch(err){btn.disabled=false;btn.textContent='Place Order';msg.style.color='#dc2626';msg.textContent=err.message||'Payment verify nahi ho paya. Store support se contact karein.';}
-        }});
-        rzp.open();
-      }else{
-        const result=await apiPost({action:'createOrder',order:order});
-        localStorage.setItem('rs_last_order',JSON.stringify({...order,orderId:result.orderId||order.orderId,status:'Pending'}));
-        setCart([]); alert('Order successfully place ho gaya.\n\nOrder ID: '+(result.orderId||order.orderId)+'\n\nDelivery details save ho gayi hain.'); location.href='orders.html';
-      }
-    }catch(err){btn.disabled=false;btn.textContent='Place Order';msg.style.color='#dc2626';msg.textContent=err.message||'Order/payment process nahi ho paya.';}
+  if (!cart.length) {
+    const upiPayee = "9917617902-7@ybl";
+  const upiName = "RastriyaSenaa Store";
+  const transactionRef = "RS" + Date.now();
+  const upiUrl = "upi://pay?pa=" + encodeURIComponent(upiPayee) + "&pn=" + encodeURIComponent(upiName) + "&am=" + encodeURIComponent(total.toFixed(2)) + "&cu=INR&tr=" + encodeURIComponent(transactionRef);
+  upiQr.src = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" + encodeURIComponent(upiUrl);
+  upiAmount.textContent = money(total);
+  paymentMethod.addEventListener("change", function(){
+    const online = paymentMethod.value === "UPI Payment";
+    upiBox.style.display = online ? "block" : "none";
+    utr.required = online;
   });
-  function escapeHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');}
+
+  summary.innerHTML = '<div class="empty"><h3>Your cart is empty</h3><p class="muted">Order place karne se pehle product cart me add karein.</p><a class="btn btn-dark" href="products.html">Go to Shop</a></div>';
+    form.style.display = "none";
+    return;
+  }
+
+  const total = cart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 0), 0);
+
+  const upiPayee = "9917617902-7@ybl";
+  const upiName = "RastriyaSenaa Store";
+  const transactionRef = "RS" + Date.now();
+  const upiUrl = "upi://pay?pa=" + encodeURIComponent(upiPayee) + "&pn=" + encodeURIComponent(upiName) + "&am=" + encodeURIComponent(total.toFixed(2)) + "&cu=INR&tr=" + encodeURIComponent(transactionRef);
+  upiQr.src = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" + encodeURIComponent(upiUrl);
+  upiAmount.textContent = money(total);
+  paymentMethod.addEventListener("change", function(){
+    const online = paymentMethod.value === "UPI Payment";
+    upiBox.style.display = online ? "block" : "none";
+    utr.required = online;
+  });
+
+  summary.innerHTML = '<div class="summary"><h3>Order Summary</h3>' +
+    cart.map(item => '<div class="summary-line"><span>' + item.name + ' × ' + item.qty + '</span><b>' + money(Number(item.price || 0) * Number(item.qty || 0)) + '</b></div>').join("") +
+    '<div class="summary-total"><span>Total</span><span>' + money(total) + '</span></div></div>';
+
+  form.addEventListener("submit", async function(e) {
+    e.preventDefault();
+    msg.textContent = "";
+    const fd = new FormData(form);
+    const data = Object.fromEntries(fd.entries());
+
+    if (!/^[0-9]{10}$/.test(data.mobile)) {
+      msg.textContent = "Mobile number 10 digit ka hona chahiye.";
+      return;
+    }
+
+    if (!/^[0-9]{6}$/.test(data.pin)) {
+      msg.textContent = "PIN code 6 digit ka hona chahiye.";
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = "Placing Order...";
+
+    const order = {
+      orderId: "RS" + Date.now(),
+      name: data.name.trim(),
+      email: data.email.trim(),
+      mobile: data.mobile.trim(),
+      address: data.address.trim(),
+      city: data.city.trim(),
+      pin: data.pin.trim(),
+      payment: data.payment,
+      utr: (data.utr || "").trim(),
+      paymentReference: transactionRef,
+      items: cart,
+      total: total,
+      status: "Pending"
+    };
+
+    try {
+      const result = await apiPost({ action: "createOrder", order: order });
+
+      localStorage.setItem("rs_last_order", JSON.stringify({
+        ...order,
+        orderId: result.orderId || order.orderId,
+        status: "Pending"
+      }));
+
+      setCart([]);
+
+      alert("Order successfully place ho gaya.\n\nOrder ID: " + (result.orderId || order.orderId) + "\n\nDelivery details save ho gayi hain.");
+      location.href = "orders.html";
+
+    } catch (err) {
+      msg.style.color = "#dc2626";
+      msg.textContent = err.message || "Order place nahi ho paya.";
+      btn.disabled = false;
+      btn.textContent = "Place Order";
+    }
+  });
 })();
 </script>
-</body></html>
+</body>
+</html>
