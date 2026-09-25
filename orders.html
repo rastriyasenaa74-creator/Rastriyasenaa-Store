@@ -1,12 +1,136 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>My Orders | RastriyaSenaa Store</title><link rel="stylesheet" href="css/style.css"></head><body>
-<div class="topbar"><div class="container row"><span>Jai Bhim • Quality Products • Secure Shopping</span><span>Support: +91 XXXXX XXXXX</span></div></div>
-<header class="header"><div class="container header-row"><a class="logo" href="index.html"><span class="logo-mark">RS</span>RastriyaSenaa Store</a>
-<nav class="nav"><a class="" href="index.html">Home</a><a class="active" href="products.html">Shop</a><a class="" href="categories.html">Categories</a><a class="" href="about.html">About</a><a class="" href="contact.html">Contact</a></nav><div class="actions"><a class="icon-btn desktop" href="login.html">Login</a><a class="icon-btn" href="cart.html">🛒<span class="badge" data-cart-count>0</span></a><button class="icon-btn menu-btn">☰</button></div></div></header>
-<section class="page-hero"><div class="container"><h1>My Orders</h1><p class="muted">Recent order details.</p></div></section><section class="section"><div class="container" id="orders"></div></section><script>const o=JSON.parse(localStorage.getItem("rs_last_order")||"null");document.getElementById("orders").innerHTML=o?`<div class="form-card"><h3>Order ${o.orderId}</h3><p>Status: <b>${o.status}</b></p><p>Total: <b>${money(o.total)}</b></p><p class="muted">${new Date(o.date).toLocaleString()}</p></div>`:'<div class="empty">No orders found.</div>'</script>
-<footer class="footer"><div class="container footer-grid"><div><div class="logo"><span class="logo-mark">RS</span>RastriyaSenaa Store</div><p>Bahujan Mahapurush, Jayanti, Rally aur social-awareness related products ke liye professional online store.</p></div>
-<div><h4>Shop</h4><a href="products.html">All Products</a><a href="categories.html">Categories</a><a href="cart.html">Cart</a></div>
-<div><h4>Information</h4><a href="about.html">About Us</a><a href="contact.html">Contact</a><a href="terms.html">Terms</a></div>
-<div><h4>Account</h4><a href="login.html">Login</a><a href="orders.html">My Orders</a></div></div>
-<div class="container copyright">© <span data-year></span> RastriyaSenaa Store. All rights reserved.</div></footer>
-<script src="js/app.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-store">
+<title>My Orders | RastriyaSenaa Store</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="topbar"><div class="container row">
+  <span>Jai Bhim • Quality Products • Secure Shopping</span>
+  <span>Support: +91 XXXXX XXXXX</span>
+</div></div>
+
+<header class="header">
+  <div class="container header-row">
+    <a class="logo" href="index.html"><span class="logo-mark">RS</span>RastriyaSenaa Store</a>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="products.html">Shop</a>
+      <a href="categories.html">Categories</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+    <div class="actions">
+      <a class="icon-btn desktop" href="login.html">Login</a>
+      <a class="icon-btn" href="cart.html">🛒<span class="badge" data-cart-count>0</span></a>
+      <button class="icon-btn menu-btn">☰</button>
+    </div>
+  </div>
+</header>
+
+<section class="page-hero">
+  <div class="container">
+    <h1>My Orders</h1>
+    <p class="muted">Aapke recent order details yahan dikhengi.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container" style="max-width:900px">
+    <div id="ordersBox"></div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container footer-grid">
+    <div>
+      <div class="logo"><span class="logo-mark">RS</span>RastriyaSenaa Store</div>
+      <p>Bahujan Mahapurush, Jayanti, Rally aur social-awareness related products ke liye professional online store.</p>
+    </div>
+    <div><h4>Shop</h4><a href="products.html">All Products</a><a href="categories.html">Categories</a><a href="cart.html">Cart</a></div>
+    <div><h4>Information</h4><a href="about.html">About Us</a><a href="contact.html">Contact</a><a href="terms.html">Terms</a></div>
+    <div><h4>Account</h4><a href="login.html">Login</a><a href="orders.html">My Orders</a></div>
+  </div>
+  <div class="container copyright">© <span data-year></span> RastriyaSenaa Store. All rights reserved.</div>
+</footer>
+
+<script src="js/app.js"></script>
+<script>
+(function(){
+  const box = document.getElementById("ordersBox");
+  let order = null;
+
+  try {
+    order = JSON.parse(localStorage.getItem("rs_last_order") || "null");
+  } catch(e) {
+    order = null;
+  }
+
+  if (!order) {
+    box.innerHTML =
+      '<div class="empty" style="text-align:center;padding:45px 20px">' +
+      '<h3>Abhi koi recent order nahi mila</h3>' +
+      '<p class="muted">Order place karne ke baad yahan order details dikhengi.</p>' +
+      '<a class="btn btn-primary" href="products.html">Continue Shopping</a>' +
+      '</div>';
+    return;
+  }
+
+  const items = Array.isArray(order.items) ? order.items : [];
+  const itemHtml = items.map(function(item){
+    const qty = Number(item.qty || 1);
+    const price = Number(item.price || 0);
+    return '<div class="summary-line" style="padding:10px 0;border-bottom:1px solid #eee">' +
+      '<span>' + escapeHtml(item.name || "Product") + ' × ' + qty + '</span>' +
+      '<b>₹' + (price * qty).toLocaleString("en-IN") + '</b>' +
+      '</div>';
+  }).join("");
+
+  const payment = escapeHtml(order.payment || "N/A");
+  const status = escapeHtml(order.status || "Pending");
+
+  box.innerHTML =
+    '<div class="form-card">' +
+      '<div style="display:flex;justify-content:space-between;gap:15px;align-items:center;flex-wrap:wrap">' +
+        '<div><h2 style="margin:0">Order #' + escapeHtml(order.orderId || "") + '</h2>' +
+        '<p class="muted" style="margin:6px 0">Recent order</p></div>' +
+        '<span style="display:inline-block;padding:7px 12px;border-radius:999px;background:#fff7ed;color:#c2410c;font-weight:700">' + status + '</span>' +
+      '</div>' +
+
+      '<div class="summary" style="margin-top:20px">' +
+        '<h3>Order Items</h3>' + itemHtml +
+        '<div class="summary-total"><span>Total</span><span>₹' + Number(order.total || 0).toLocaleString("en-IN") + '</span></div>' +
+      '</div>' +
+
+      '<div class="summary" style="margin-top:20px">' +
+        '<h3>Customer Details</h3>' +
+        '<p><b>Name:</b> ' + escapeHtml(order.name || "") + '<br>' +
+        '<b>Mobile:</b> ' + escapeHtml(order.mobile || "") + '<br>' +
+        '<b>Email:</b> ' + escapeHtml(order.email || "") + '</p>' +
+        '<p><b>Delivery Address:</b><br>' +
+        escapeHtml(order.address || "") + '<br>' +
+        escapeHtml(order.city || "") + ', ' + escapeHtml(order.pin || "") + '</p>' +
+        '<p><b>Payment:</b> ' + payment + '</p>' +
+      '</div>' +
+
+      '<div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap">' +
+        '<a class="btn btn-primary" href="products.html">Continue Shopping</a>' +
+        '<a class="btn btn-outline" href="index.html">Home</a>' +
+      '</div>' +
+    '</div>';
+})();
+
+function escapeHtml(value){
+  return String(value == null ? "" : value)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+}
+</script>
+</body>
+</html>
