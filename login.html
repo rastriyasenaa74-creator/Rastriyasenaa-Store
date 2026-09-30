@@ -1,12 +1,130 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Login | RastriyaSenaa Store</title><link rel="stylesheet" href="css/style.css"></head><body>
-<div class="topbar"><div class="container row"><span>Jai Bhim • Quality Products • Secure Shopping</span><span>Support: +91 XXXXX XXXXX</span></div></div>
-<header class="header"><div class="container header-row"><a class="logo" href="index.html"><span class="logo-mark">RS</span>RastriyaSenaa Store</a>
-<nav class="nav"><a class="" href="index.html">Home</a><a class="" href="products.html">Shop</a><a class="" href="categories.html">Categories</a><a class="" href="about.html">About</a><a class="" href="contact.html">Contact</a></nav><div class="actions"><a class="icon-btn desktop" href="login.html">Login</a><a class="icon-btn" href="cart.html">🛒<span class="badge" data-cart-count>0</span></a><button class="icon-btn menu-btn">☰</button></div></div></header>
-<section class="section"><div class="container" style="max-width:460px"><div class="form-card"><h2>Customer Login</h2><p class="muted">Account system Google Sheets backend se connect kiya ja sakta hai.</p><form onsubmit="event.preventDefault();alert('Demo login');"><label>Mobile / Email</label><input class="input" required><br><br><label>Password</label><input class="input" type="password" required><br><br><button class="btn btn-dark" style="width:100%">Login</button></form></div></div></section>
-<footer class="footer"><div class="container footer-grid"><div><div class="logo"><span class="logo-mark">RS</span>RastriyaSenaa Store</div><p>Bahujan Mahapurush, Jayanti, Rally aur social-awareness related products ke liye professional online store.</p></div>
-<div><h4>Shop</h4><a href="products.html">All Products</a><a href="categories.html">Categories</a><a href="cart.html">Cart</a></div>
-<div><h4>Information</h4><a href="about.html">About Us</a><a href="contact.html">Contact</a><a href="terms.html">Terms</a></div>
-<div><h4>Account</h4><a href="login.html">Login</a><a href="orders.html">My Orders</a></div></div>
-<div class="container copyright">© <span data-year></span> RastriyaSenaa Store. All rights reserved.</div></footer>
-<script src="js/app.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-store">
+<title>Customer Login | RastriyaSenaa Store</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+.login-wrap{min-height:70vh;display:flex;align-items:center;justify-content:center;padding:40px 16px}
+.login-card{width:100%;max-width:460px}
+.login-note{background:#f1f5f9;padding:12px;border-radius:10px;color:#475569;font-size:14px;margin:15px 0}
+.error{color:#dc2626;margin-top:12px}
+.success{color:#047857;margin-top:12px}
+</style>
+</head>
+<body>
+<div class="topbar">Jai Bhim • Quality Products • Secure Shopping</div>
+<header class="header">
+  <div class="container nav">
+    <a class="logo" href="index.html"><span class="logo-mark">RS</span>RastriyaSenaa Store</a>
+    <nav>
+      <a href="categories.html">Categories</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+      <a class="btn btn-outline" href="admin/login.html">Admin Login</a>
+    </nav>
+  </div>
+</header>
+
+<main class="login-wrap">
+<div class="form-card login-card">
+  <h1>Customer Login</h1>
+  <p class="muted">Apne order details dekhne ke liye login karein.</p>
+
+  <div class="login-note">
+    <b>Note:</b> Admin account se yahan login nahi karna hai.
+    Admin login ke liye <b>Admin Login</b> button use karein.
+  </div>
+
+  <form id="customerForm">
+    <label>Mobile / Email</label>
+    <input id="identity" class="input" required autocomplete="username"
+           placeholder="10 digit mobile ya email">
+
+    <br><br>
+
+    <label>Order ID</label>
+    <input id="orderId" class="input" required
+           placeholder="Example: RS1234567890">
+
+    <br><br>
+
+    <button id="loginBtn" class="btn btn-dark" style="width:100%">
+      View My Order
+    </button>
+
+    <p id="msg"></p>
+  </form>
+
+  <p style="margin-top:20px;text-align:center">
+    <a href="index.html">← Continue Shopping</a>
+  </p>
+</div>
+</main>
+
+<footer class="footer">
+  <div class="container">© RastriyaSenaa Store</div>
+</footer>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbwr1tsVD-_dFZEFLnNR-ZMSSATqT4RpfB9rSXGEKuNiM4n-yMxcjj9yQF7Qvto-VmT70A/exec";
+
+function esc(v){
+  return String(v||'').replace(/[&<>"']/g,s=>({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+  }[s]));
+}
+
+document.getElementById('customerForm').addEventListener('submit', async function(e){
+  e.preventDefault();
+
+  const msg=document.getElementById('msg');
+  const btn=document.getElementById('loginBtn');
+  const identity=document.getElementById('identity').value.trim();
+  const orderId=document.getElementById('orderId').value.trim();
+
+  msg.className='';
+  msg.textContent='Checking order...';
+  btn.disabled=true;
+
+  try{
+    const response=await fetch(API_URL,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({
+        action:'customerOrderLookup',
+        identity:identity,
+        orderId:orderId
+      })
+    });
+
+    const result=await response.json();
+
+    if(!result.ok){
+      throw new Error(result.error || 'Order not found');
+    }
+
+    localStorage.setItem('rs_customer',JSON.stringify({
+      identity:identity,
+      orderId:result.order.orderId
+    }));
+
+    localStorage.setItem('rs_last_order',JSON.stringify(result.order));
+
+    msg.className='success';
+    msg.textContent='Order mil gaya. Opening My Orders...';
+
+    setTimeout(()=>location.href='orders.html',500);
+
+  }catch(err){
+    msg.className='error';
+    msg.textContent=err.message;
+  }finally{
+    btn.disabled=false;
+  }
+});
+</script>
+</body>
+</html>
