@@ -183,3 +183,99 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll("[data-year]").forEach(e => e.textContent = new Date().getFullYear());
 });
 
+
+/* =========================================================
+   RASTRIYASENAA MOBILE NAVIGATION - FINAL FIX
+   ========================================================= */
+(function () {
+  function initMobileMenu() {
+    const btn = document.querySelector(".menu-btn");
+    const headerRow = document.querySelector(".header-row");
+    const nav = document.querySelector(".nav");
+
+    if (!btn || !headerRow || !nav) return;
+    if (document.getElementById("mobileMenuPanel")) return;
+
+    const panel = document.createElement("div");
+    panel.id = "mobileMenuPanel";
+    panel.className = "mobile-menu-panel";
+
+    nav.querySelectorAll("a").forEach(function (oldLink) {
+      const a = document.createElement("a");
+      a.href = oldLink.getAttribute("href") || "#";
+      a.textContent = (oldLink.textContent || "").trim();
+      if (oldLink.classList.contains("active")) a.classList.add("active");
+      panel.appendChild(a);
+    });
+
+    // Login is hidden on small screens by the desktop class, so add it to mobile menu.
+    if (!Array.from(panel.querySelectorAll("a")).some(a => a.getAttribute("href") === "login.html")) {
+      const login = document.createElement("a");
+      login.href = "login.html";
+      login.textContent = "Login";
+      panel.appendChild(login);
+    }
+
+    const cart = document.createElement("a");
+    cart.href = "cart.html";
+    cart.textContent = "🛒 Cart";
+    cart.className = "mobile-cart-link";
+    panel.appendChild(cart);
+
+    headerRow.appendChild(panel);
+
+    const overlay = document.createElement("div");
+    overlay.id = "mobileMenuOverlay";
+    overlay.className = "mobile-menu-overlay";
+    document.body.appendChild(overlay);
+
+    function closeMenu() {
+      panel.classList.remove("open");
+      overlay.classList.remove("open");
+      btn.classList.remove("open");
+      btn.setAttribute("aria-expanded", "false");
+      btn.textContent = "☰";
+      document.body.classList.remove("mobile-menu-open");
+    }
+
+    function openMenu() {
+      panel.classList.add("open");
+      overlay.classList.add("open");
+      btn.classList.add("open");
+      btn.setAttribute("aria-expanded", "true");
+      btn.textContent = "✕";
+      document.body.classList.add("mobile-menu-open");
+    }
+
+    btn.type = "button";
+    btn.setAttribute("aria-label", "Open mobile menu");
+    btn.setAttribute("aria-expanded", "false");
+
+    btn.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (panel.classList.contains("open")) closeMenu();
+      else openMenu();
+    });
+
+    overlay.addEventListener("click", closeMenu);
+
+    panel.querySelectorAll("a").forEach(function (a) {
+      a.addEventListener("click", closeMenu);
+    });
+
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") closeMenu();
+    });
+
+    window.addEventListener("resize", function () {
+      if (window.innerWidth > 900) closeMenu();
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initMobileMenu);
+  } else {
+    initMobileMenu();
+  }
+})();
