@@ -1,1 +1,138 @@
-<!doctype html><html lang="hi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-store"><title>Orders | Admin</title><link rel="stylesheet" href="../css/style.css"></head><body><div class="admin-shell"><aside class="sidebar"><a class="logo" href="../index.html"><span class="logo-mark">RS</span>RastriyaSenaa</a><a class="side-link" href="index.html">Dashboard</a><a class="side-link" href="products.html">Products</a><a class="side-link active" href="orders.html">Orders</a><a class="side-link" href="admins.html">Admins</a><a class="side-link" href="settings.html">Settings</a></aside><main class="admin-main"><div class="admin-top"><div><h1 style="margin:0">Orders</h1><span class="muted">Google Sheets se live orders</span></div><div><button class="btn btn-outline" onclick="loadOrders()">↻ Refresh</button> <button class="btn btn-dark" onclick="logoutAdmin()">Logout</button></div></div><div id="msg" class="form-card" style="margin:18px 0">Loading orders...</div><div class="table-wrap"><table><thead><tr><th>Order ID</th><th>Customer</th><th>Mobile</th><th>Total</th><th>Status</th><th>Action</th></tr></thead><tbody id="orderRows"></tbody></table></div></main></div><script src="../js/app.js"></script><script>const me=requireAdmin();if(!me){};function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}async function loadOrders(){const msg=document.getElementById('msg'),tbody=document.getElementById('orderRows');msg.textContent='Orders load ho rahe hain...';tbody.innerHTML='';try{const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),15000);const r=await fetch(window.API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'getOrders',token:adminToken()}),signal:controller.signal});clearTimeout(timer);if(!r.ok)throw new Error('API HTTP error: '+r.status);const data=await r.json();if(!data.ok)throw new Error(data.error||'Orders API failed');const orders=data.orders||[];msg.textContent=orders.length+' order(s) found';tbody.innerHTML=orders.map(o=>'<tr><td><b>'+esc(o.orderId)+'</b></td><td>'+esc(o.customerName)+'</td><td>'+esc(o.mobile)+'</td><td>₹'+Number(o.total||0).toLocaleString('en-IN')+'</td><td><span class="tag">'+esc(o.status)+'</span></td><td><select class="select" onchange="changeStatus(''+esc(o.orderId).replace(/'/g,"\'")+'',this.value)"><option value="">Change status</option><option>Pending</option><option>Confirmed</option><option>Processing</option><option>Shipped</option><option>Delivered</option><option>Cancelled</option></select></td></tr>').join('')||'<tr><td colspan="6">No orders found.</td></tr>';}catch(e){msg.style.color='#dc2626';msg.textContent=e.name==='AbortError'?'API response timeout (15 sec). Apps Script deployment/API URL check karein.':e.message;tbody.innerHTML='<tr><td colspan="6" style="color:#dc2626">'+esc(e.message)+'</td></tr>';}}async function changeStatus(orderId,status){if(!status)return;if(!confirm('Order '+orderId+' ka status '+status+' karna hai?'))return;try{await apiPost({action:'updateOrderStatus',token:adminToken(),orderId,status});await loadOrders();}catch(e){alert(e.message);}}loadOrders();</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-store">
+<title>Orders | RastriyaSenaa Store Admin</title>
+<link rel="stylesheet" href="../css/style.css">
+<style>
+.order-items{font-size:13px;color:#64748b;margin-top:5px}
+.status{display:inline-block;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:700}
+.status.pending{background:#fff7ed;color:#c2410c}
+.status.confirmed{background:#ecfdf5;color:#047857}
+.status.cancelled{background:#fef2f2;color:#b91c1c}
+.toolbar{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:18px}
+.error-box{padding:14px;border-radius:10px;background:#fef2f2;color:#b91c1c;margin-bottom:15px}
+.empty{padding:30px;text-align:center;color:#64748b}
+</style>
+</head>
+<body>
+<script>
+(function(){
+  try{
+    const a=JSON.parse(localStorage.getItem('rs_admin')||'null');
+    if(!a || !a.token) location.replace('login.html');
+  }catch(e){ location.replace('login.html'); }
+})();
+</script>
+
+<div class="admin-shell">
+<aside class="sidebar">
+<a class="logo" href="../index.html"><span class="logo-mark">RS</span>RastriyaSenaa</a>
+<a class="side-link" href="index.html">Dashboard</a>
+<a class="side-link" href="products.html">Products</a>
+<a class="side-link active" href="orders.html">Orders</a>
+<a class="side-link" href="admins.html">Admins</a>
+<a class="side-link" href="settings.html">Settings</a>
+<a class="side-link" href="../index.html">← Store</a>
+</aside>
+
+<main class="admin-main">
+<div class="admin-top">
+<div><h1 style="margin:0">Orders</h1><span class="muted">Google Sheets se live orders</span></div>
+<div>
+<button class="btn btn-outline" id="refreshBtn">↻ Refresh</button>
+<button class="btn btn-dark" onclick="adminLogout()">Logout</button>
+</div>
+</div>
+
+<div id="message"></div>
+<div class="table-wrap">
+<table>
+<thead><tr>
+<th>Order ID</th><th>Customer</th><th>Mobile</th><th>Total</th><th>Status</th><th>Action</th>
+</tr></thead>
+<tbody id="orderRows"></tbody>
+</table>
+</div>
+</main>
+</div>
+
+<script src="../js/app.js"></script>
+<script>
+const rowsEl=document.getElementById('orderRows');
+const messageEl=document.getElementById('message');
+
+function esc(v){
+  return String(v==null?'':v).replace(/[&<>"']/g,s=>({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+  }[s]));
+}
+
+function statusClass(s){
+  return String(s||'Pending').toLowerCase().replace(/\s+/g,'-');
+}
+
+async function loadOrders(){
+  messageEl.innerHTML='';
+  rowsEl.innerHTML='<tr><td colspan="6" class="empty">Loading orders...</td></tr>';
+  try{
+    const result=await apiPost({action:'getOrders',token:adminToken()});
+    const orders=result.orders||[];
+    if(!orders.length){
+      rowsEl.innerHTML='<tr><td colspan="6" class="empty">Abhi koi order nahi mila.</td></tr>';
+      return;
+    }
+    rowsEl.innerHTML=orders.slice().reverse().map(o=>{
+      const items=(()=>{
+        try{
+          const a=JSON.parse(o.itemsJson||'[]');
+          return Array.isArray(a)?a.map(x=>`${esc(x.name||'Product')} × ${Number(x.qty||x.quantity||1)}`).join(', '):'';
+        }catch(e){return '';}
+      })();
+      const st=String(o.status||'Pending');
+      return `<tr>
+        <td><b>${esc(o.orderId)}</b><div class="order-items">${items}</div></td>
+        <td>${esc(o.customerName)}<br><span class="muted">${esc(o.email)}</span></td>
+        <td>${esc(o.mobile)}</td>
+        <td><b>${money(o.total)}</b><br><span class="muted">${esc(o.payment)}</span></td>
+        <td><span class="status ${statusClass(st)}">${esc(st)}</span></td>
+        <td>
+          <select class="select" onchange="changeStatus('${esc(o.orderId)}',this.value)">
+            <option value="">Change</option>
+            <option value="Pending">Pending</option>
+            <option value="Confirmed">Confirmed</option>
+            <option value="Cancelled">Cancelled</option>
+            <option value="Shipped">Shipped</option>
+            <option value="Delivered">Delivered</option>
+          </select>
+        </td>
+      </tr>`;
+    }).join('');
+  }catch(err){
+    rowsEl.innerHTML='<tr><td colspan="6" class="empty">Orders load nahi ho paaye.</td></tr>';
+    messageEl.innerHTML='<div class="error-box"><b>Error:</b> '+esc(err.message)+'</div>';
+  }
+}
+
+async function changeStatus(orderId,status){
+  if(!status) return;
+  if(!confirm('Order '+orderId+' ka status '+status+' karna hai?')) {
+    await loadOrders();
+    return;
+  }
+  try{
+    await apiPost({action:'updateOrderStatus',token:adminToken(),orderId,status});
+    await loadOrders();
+  }catch(err){
+    alert(err.message);
+    await loadOrders();
+  }
+}
+
+document.getElementById('refreshBtn').onclick=loadOrders;
+loadOrders();
+</script>
+</body>
+</html>
