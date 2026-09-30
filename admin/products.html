@@ -74,7 +74,6 @@
       <div>
         <h1 style="margin:0">Products</h1>
         <span class="muted">
-          Add products with secure Google Drive image upload
         </span>
       </div>
 
@@ -410,7 +409,7 @@
 
     if(f.size > 5 * 1024 * 1024){
 
-      alert("Image size 5 MB se zyada nahi honi chahiye.");
+      alert("The image size should not exceed 5 MB.");
 
       file.value = "";
 
@@ -526,7 +525,7 @@
         <tr>
           <td colspan="6"
               style="text-align:center;color:#dc2626">
-            Products load nahi ho rahe: ${escapeHtml(err.message)}
+            Products are not loading: ${escapeHtml(err.message)}
           </td>
         </tr>
       `;
@@ -587,7 +586,7 @@
     if(!f){
 
       msg.textContent =
-        "Product image select karein.";
+        "Select the product image.";
 
       return;
     }
@@ -598,7 +597,7 @@
     if(f.size > 5 * 1024 * 1024){
 
       msg.textContent =
-        "Image 5 MB se zyada hai.";
+        "The image is larger than 5 MB.";
 
       return;
     }
@@ -613,7 +612,7 @@
     if(!category){
 
       msg.textContent =
-        "Please category select karein.";
+        "Please select a category.";
 
       return;
     }
