@@ -40,7 +40,7 @@
 
 <main class="admin-main">
 <div class="admin-top">
-<div><h1 style="margin:0">Orders</h1><span class="muted">Google Sheets se live orders</span></div>
+<div><h1 style="margin:0">Orders</h1><span class="muted"></span></div>
 <div>
 <button class="btn btn-outline" id="refreshBtn">↻ Refresh</button>
 <button class="btn btn-dark" onclick="adminLogout()">Logout</button>
@@ -81,7 +81,7 @@ async function loadOrders(){
     const result=await apiPost({action:'getOrders',token:adminToken()});
     const orders=result.orders||[];
     if(!orders.length){
-      rowsEl.innerHTML='<tr><td colspan="6" class="empty">Abhi koi order nahi mila.</td></tr>';
+      rowsEl.innerHTML='<tr><td colspan="6" class="empty">No order has been received yet.</td></tr>';
       return;
     }
     rowsEl.innerHTML=orders.slice().reverse().map(o=>{
@@ -111,14 +111,14 @@ async function loadOrders(){
       </tr>`;
     }).join('');
   }catch(err){
-    rowsEl.innerHTML='<tr><td colspan="6" class="empty">Orders load nahi ho paaye.</td></tr>';
+    rowsEl.innerHTML='<tr><td colspan="6" class="empty">Orders could not be loaded.</td></tr>';
     messageEl.innerHTML='<div class="error-box"><b>Error:</b> '+esc(err.message)+'</div>';
   }
 }
 
 async function changeStatus(orderId,status){
   if(!status) return;
-  if(!confirm('Order '+orderId+' ka status '+status+' karna hai?')) {
+  if(!confirm('Order '+orderId+' status of'+status+' Do you want to do it?')) {
     await loadOrders();
     return;
   }
