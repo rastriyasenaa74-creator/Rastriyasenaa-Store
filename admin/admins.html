@@ -1,35 +1,181 @@
-<!doctype html><html lang="hi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-store"><title>Admin Management | RastriyaSenaa Store</title><link rel="stylesheet" href="../css/style.css"></head><body>
-<div class="admin-shell"><aside class="sidebar"><a class="logo" href="../index.html"><span class="logo-mark">RS</span>RastriyaSenaa</a><a class="side-link" href="index.html">Dashboard</a><a class="side-link" href="products.html">Products</a><a class="side-link" href="orders.html">Orders</a><a class="side-link active" href="admins.html">Admins</a><a class="side-link" href="settings.html">Settings</a><a class="side-link" href="../index.html">← Store</a></aside>
-<main class="admin-main"><div class="admin-top"><div><h1 style="margin:0">Admin Management</h1><span class="muted">Sirf Super Admin admin accounts manage kar sakta hai.</span></div><button class="btn btn-dark" onclick="logoutAdmin()">Logout</button></div>
-<div id="guardMsg" class="form-card" style="display:none"></div>
-<div id="content" style="display:none">
-<div class="form-card" style="margin-bottom:18px"><div style="display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap"><div><h3 style="margin:0 0 6px">Admin List</h3><p class="muted" style="margin:0">Password kabhi list mein show nahi hoga.</p></div><button class="btn btn-primary" id="addBtn">+ Add Normal Admin</button></div></div>
-<div class="table-wrap"><table><thead><tr><th>Admin ID</th><th>Role</th><th>Permissions</th><th>Status</th><th>Created</th><th>Action</th></tr></thead><tbody id="adminRows"></tbody></table></div>
-</div></main></div>
-<div id="modal" class="modal"><div class="modal-card"><h2>Create Normal Admin</h2><form id="form"><div class="form-grid"><div><label>Admin ID</label><input id="newUser" class="input" required></div><div><label>Password</label><input id="newPass" class="input" type="password" minlength="6" required></div><div class="full"><label>Permissions</label><div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:8px"><label><input type="checkbox" id="permProducts" checked> Products</label><label><input type="checkbox" id="permOrders" checked> Orders</label></div></div><div class="full"><button class="btn btn-primary">Create Admin</button> <button type="button" class="btn btn-outline" id="cancelBtn">Cancel</button></div><div class="full"><p id="msg"></p></div></div></form></div></div>
-<script src="../js/app.js"></script><script>
-const me=requireAdmin();
-const content=document.getElementById('content'), guard=document.getElementById('guardMsg');
-if(me && String(me.role).toLowerCase()==='superadmin'){content.style.display='block';loadAdmins();}else{guard.style.display='block';guard.innerHTML='<h3>Access denied</h3><p class="muted">Admin Management sirf Super Admin ke liye available hai.</p>';}
-async function loadAdmins(){
- adminRows.innerHTML='<tr><td colspan="6">Admin list load ho rahi hai...</td></tr>';
- try{
-  const controller=new AbortController();
-  const timer=setTimeout(()=>controller.abort(),15000);
-  const r=await fetch(window.API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'getAdmins',token:adminToken()}),signal:controller.signal});
-  clearTimeout(timer);
-  if(!r.ok) throw new Error('API HTTP error: '+r.status);
-  const data=await r.json();
-  if(!data.ok) throw new Error(data.error||'Admin list API failed');
-  adminRows.innerHTML=(data.admins||[]).map(a=>{const self=String(a.username).toLowerCase()===String(me.username).toLowerCase();const status=String(a.status||'Active')==='Active';return '<tr><td><b>'+esc(a.username)+'</b></td><td>'+esc(a.role)+'</td><td>'+esc(a.permissions)+'</td><td><span class="tag">'+esc(a.status)+'</span></td><td>'+esc(a.createdAt)+'</td><td style="white-space:nowrap">'+(self?'<span class="muted">Current account</span>':'<button class="btn btn-outline btn-sm" onclick="toggleAdmin(\''+js(a.username)+'\',\''+(status?'Disabled':'Active')+'\')">'+(status?'Disable':'Enable')+'</button> <button class="btn btn-sm" style="background:#dc2626;color:#fff" onclick="deleteAdminAccount(\''+js(a.username)+'\')">Delete</button>')+'</td></tr>'}).join('')||'<tr><td colspan="6">No admins found.</td></tr>';
- }catch(e){
-  const msg=e.name==='AbortError'?'API response timeout (15 sec). Apps Script deployment/API URL check karein.':e.message;
-  adminRows.innerHTML='<tr><td colspan="6" style="color:#dc2626">'+esc(msg)+'</td></tr>';
- }
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-store">
+<title>Admins | RastriyaSenaa Store Admin</title>
+<link rel="stylesheet" href="../css/style.css">
+<style>
+.toolbar{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:18px}
+.error-box{padding:14px;border-radius:10px;background:#fef2f2;color:#b91c1c;margin-bottom:15px}
+.empty{padding:30px;text-align:center;color:#64748b}
+.badge{padding:5px 9px;border-radius:999px;font-size:12px;font-weight:700}
+.badge.active{background:#ecfdf5;color:#047857}
+.badge.disabled{background:#fef2f2;color:#b91c1c}
+</style>
+</head>
+<body>
+<script>
+(function(){
+  try{
+    const a=JSON.parse(localStorage.getItem('rs_admin')||'null');
+    if(!a || !a.token) location.replace('login.html');
+    if(a.role!=='superadmin') location.replace('index.html');
+  }catch(e){ location.replace('login.html'); }
+})();
+</script>
+
+<div class="admin-shell">
+<aside class="sidebar">
+<a class="logo" href="../index.html"><span class="logo-mark">RS</span>RastriyaSenaa</a>
+<a class="side-link" href="index.html">Dashboard</a>
+<a class="side-link" href="products.html">Products</a>
+<a class="side-link" href="orders.html">Orders</a>
+<a class="side-link active" href="admins.html">Admins</a>
+<a class="side-link" href="settings.html">Settings</a>
+<a class="side-link" href="../index.html">← Store</a>
+</aside>
+
+<main class="admin-main">
+<div class="admin-top">
+<div><h1 style="margin:0">Admin Management</h1><span class="muted">Only Super Admin can manage admins</span></div>
+<div>
+<button class="btn btn-outline" id="refreshBtn">↻ Refresh</button>
+<button class="btn btn-dark" onclick="adminLogout()">Logout</button>
+</div>
+</div>
+
+<div id="message"></div>
+<div class="form-card">
+<div class="toolbar">
+<h3 style="margin:0">Admin List</h3>
+<button class="btn btn-primary" onclick="openModal()">+ Add Admin</button>
+</div>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Username</th><th>Role</th><th>Permissions</th><th>Status</th><th>Created</th><th>Action</th></tr></thead>
+<tbody id="adminRows"></tbody>
+</table>
+</div>
+</div>
+</main>
+</div>
+
+<div id="modal" class="modal">
+<div class="modal-card">
+<h2>Create Normal Admin</h2>
+<form id="form">
+<div class="form-grid">
+<div><label>Admin ID</label><input id="newUser" class="input" required></div>
+<div><label>Password</label><input id="newPass" class="input" type="password" minlength="6" required></div>
+<div class="full"><label>Permissions</label>
+<label><input type="checkbox" id="permProducts" checked> Products</label>
+<label><input type="checkbox" id="permOrders" checked> Orders</label>
+</div>
+<div class="full">
+<button class="btn btn-primary">Create Admin</button>
+<button type="button" class="btn btn-outline" onclick="closeModal()">Cancel</button>
+</div>
+<p id="formMsg"></p>
+</div>
+</form>
+</div>
+</div>
+
+<script src="../js/app.js"></script>
+<script>
+const adminRows=document.getElementById('adminRows');
+const messageEl=document.getElementById('message');
+
+function esc(v){
+  return String(v==null?'':v).replace(/[&<>"']/g,s=>({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+  }[s]));
 }
-async function toggleAdmin(username,status){if(!confirm('Admin '+username+' ko '+status+' karna hai?'))return;try{await apiPost({action:'updateAdminStatus',token:adminToken(),username,status});loadAdmins();}catch(e){alert(e.message)}}
-async function deleteAdminAccount(username){if(!confirm('WARNING: '+username+' ko permanently delete karna hai?'))return;try{await apiPost({action:'deleteAdmin',token:adminToken(),username});loadAdmins();}catch(e){alert(e.message)}}
-document.getElementById('addBtn').onclick=()=>document.getElementById('modal').classList.add('open');document.getElementById('cancelBtn').onclick=()=>document.getElementById('modal').classList.remove('open');
-document.getElementById('form').onsubmit=async e=>{e.preventDefault();const perms=[];if(permProducts.checked)perms.push('products');if(permOrders.checked)perms.push('orders');try{await apiPost({action:'createAdmin',token:adminToken(),admin:{username:newUser.value.trim(),password:newPass.value,permissions:perms.join(',')}});e.target.reset();permProducts.checked=permOrders.checked=true;document.getElementById('modal').classList.remove('open');loadAdmins();}catch(err){msg.textContent=err.message}};
-function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}function js(s){return String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'")}
-</script></body></html>
+function openModal(){document.getElementById('modal').classList.add('open');}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+
+async function loadAdmins(){
+  messageEl.innerHTML='';
+  adminRows.innerHTML='<tr><td colspan="6" class="empty">Loading admins...</td></tr>';
+  try{
+    const result=await apiPost({action:'getAdmins',token:adminToken()});
+    const admins=result.admins||[];
+    if(!admins.length){
+      adminRows.innerHTML='<tr><td colspan="6" class="empty">No admins found.</td></tr>';
+      return;
+    }
+    adminRows.innerHTML=admins.map(a=>{
+      const isSuper=String(a.role||'').toLowerCase()==='superadmin';
+      const active=String(a.status||'Active').toLowerCase()==='active';
+      const created=a.createdAt ? new Date(a.createdAt).toLocaleString('en-IN') : '';
+      return `<tr>
+        <td><b>${esc(a.username)}</b></td>
+        <td>${esc(a.role)}</td>
+        <td>${esc(a.permissions||'all')}</td>
+        <td><span class="badge ${active?'active':'disabled'}">${esc(a.status||'Active')}</span></td>
+        <td>${esc(created)}</td>
+        <td>${isSuper
+          ? '<span class="muted">Protected</span>'
+          : `<button class="btn btn-outline" onclick="toggleAdmin('${esc(a.username)}',${active})">${active?'Disable':'Enable'}</button>
+             <button class="btn btn-danger" onclick="deleteAdmin('${esc(a.username)}')">Delete</button>`}
+        </td>
+      </tr>`;
+    }).join('');
+  }catch(err){
+    adminRows.innerHTML='<tr><td colspan="6" class="empty">Admin list load nahi ho paayi.</td></tr>';
+    messageEl.innerHTML='<div class="error-box"><b>Error:</b> '+esc(err.message)+'</div>';
+  }
+}
+
+async function toggleAdmin(username,active){
+  if(!confirm(username+' ko '+(active?'disable':'enable')+' karna hai?')) return;
+  try{
+    await apiPost({action:'setAdminStatus',token:adminToken(),username,status:active?'Disabled':'Active'});
+    await loadAdmins();
+  }catch(err){alert(err.message);}
+}
+
+async function deleteAdmin(username){
+  if(!confirm('WARNING: '+username+' ko permanently delete karna hai?')) return;
+  try{
+    await apiPost({action:'deleteAdmin',token:adminToken(),username});
+    await loadAdmins();
+  }catch(err){alert(err.message);}
+}
+
+document.getElementById('refreshBtn').onclick=loadAdmins;
+
+document.getElementById('form').onsubmit=async e=>{
+  e.preventDefault();
+  const msg=document.getElementById('formMsg');
+  const permissions=[];
+  if(document.getElementById('permProducts').checked) permissions.push('products');
+  if(document.getElementById('permOrders').checked) permissions.push('orders');
+  if(!permissions.length){msg.textContent='Kam se kam ek permission select karein.';return;}
+  msg.textContent='Creating...';
+  try{
+    await apiPost({
+      action:'createAdmin',
+      token:adminToken(),
+      admin:{
+        username:document.getElementById('newUser').value.trim(),
+        password:document.getElementById('newPass').value,
+        role:'admin',
+        permissions:permissions.join(',')
+      }
+    });
+    msg.textContent='Admin created successfully.';
+    e.target.reset();
+    document.getElementById('permProducts').checked=true;
+    document.getElementById('permOrders').checked=true;
+    await loadAdmins();
+    setTimeout(closeModal,500);
+  }catch(err){msg.textContent=err.message;}
+};
+
+loadAdmins();
+</script>
+</body>
+</html>
