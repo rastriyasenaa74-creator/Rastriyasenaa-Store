@@ -2,13 +2,13 @@
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-store"><title>Checkout | RastriyaSenaa Store</title><link rel="stylesheet" href="css/style.css"></head>
 <body>
-<div class="topbar"><div class="container row"><span>Jai Bhim • Quality Products • Secure Shopping</span><span>Support: +91 XXXXX XXXXX</span></div></div>
+<div class="topbar"><div class="container row"><span>Jai Bhim • Quality Products • Secure Shopping</span><span>Support: +91 7348331408, rastriyasenaa74@gmail.com</span></div></div>
 <header class="header"><div class="container header-row"><a class="logo" href="index.html"><span class="logo-mark">RS</span>RastriyaSenaa Store</a><nav class="nav"><a href="index.html">Home</a><a class="active" href="products.html">Shop</a><a href="categories.html">Categories</a><a href="about.html">About</a><a href="contact.html">Contact</a></nav><div class="actions"><a class="icon-btn desktop" href="login.html">Login</a><a class="icon-btn" href="cart.html">🛒<span class="badge" data-cart-count>0</span></a><button class="icon-btn menu-btn">☰</button></div></div></header>
 
-<section class="page-hero"><div class="container"><h1>Checkout</h1><p class="muted">Delivery ke liye customer details bharna zaroori hai.</p></div></section>
+<section class="page-hero"><div class="container"><h1>Checkout</h1><p class="muted">It is mandatory to fill in the customer details for delivery.</p></div></section>
 
 <section class="section"><div class="container" style="max-width:850px"><div class="form-card">
-<div class="alert">Customer details ke bina order place nahi hoga. Ye details order ke saath save hongi taaki delivery address available rahe.</div>
+<div class="alert">An order cannot be placed without customer details. These details will be saved with the order to ensure the delivery address is available.</div>
 <div id="cartSummary" style="margin:18px 0"></div>
 
 <form id="checkoutForm" class="form-grid">
@@ -21,12 +21,12 @@
 <div class="full"><label>Payment Method *</label><select class="select" name="payment" id="paymentMethod" required><option value="Cash on Delivery">Cash on Delivery</option><option value="UPI Payment">UPI Payment</option></select></div>
 <div class="full" id="upiBox" style="display:none;text-align:center;border:1px solid #e5e7eb;border-radius:14px;padding:18px;background:#fafafa">
   <h3 style="margin-top:0">UPI Payment</h3>
-  <p class="muted">QR scan karke exact order amount pay karein.</p>
+  <p class="muted">Scan the QR code to pay the exact order amount.</p>
   <img id="upiQr" alt="UPI QR Code" style="width:240px;height:240px;object-fit:contain;border-radius:12px;background:#fff;padding:8px">
   <p><b>UPI ID:</b> 9917617902-7@ybl</p>
   <p><b>Payable Amount:</b> <span id="upiAmount">₹0</span></p>
   <div style="max-width:420px;margin:12px auto 0;text-align:left"><label>UTR / Transaction ID *</label><input id="utr" class="input" name="utr" inputmode="numeric" maxlength="35" placeholder="Payment ke baad UTR number dalein"></div>
-  <small class="muted">Payment karne ke baad UTR/Transaction ID zaroor submit karein. Payment manually verify hone ke baad order confirm hoga.</small>
+  <small class="muted">Please submit the payment/transaction ID after making the payment. The order will be confirmed once the payment has been manually verified.</small>
 </div>
 <div class="full"><button id="placeOrderBtn" class="btn btn-primary" type="submit">Place Order</button> <a class="btn btn-outline" href="cart.html">Back to Cart</a></div>
 <div class="full"><p id="msg"></p></div>
@@ -63,7 +63,7 @@
     utr.required = online;
   });
 
-  summary.innerHTML = '<div class="empty"><h3>Your cart is empty</h3><p class="muted">Order place karne se pehle product cart me add karein.</p><a class="btn btn-dark" href="products.html">Go to Shop</a></div>';
+  summary.innerHTML = '<div class="empty"><h3>Your cart is empty</h3><p class="muted">Add the product to the cart before placing the order</p><a class="btn btn-dark" href="products.html">Go to Shop</a></div>';
     form.style.display = "none";
     return;
   }
@@ -93,12 +93,12 @@
     const data = Object.fromEntries(fd.entries());
 
     if (!/^[0-9]{10}$/.test(data.mobile)) {
-      msg.textContent = "Mobile number 10 digit ka hona chahiye.";
+      msg.textContent = "The mobile number must be 10 digits long.";
       return;
     }
 
     if (!/^[0-9]{6}$/.test(data.pin)) {
-      msg.textContent = "PIN code 6 digit ka hona chahiye.";
+      msg.textContent = "The PIN code must be 6 digits long.";
       return;
     }
 
@@ -144,12 +144,12 @@
 
       setCart([]);
 
-      alert("Order successfully place ho gaya.\n\nOrder ID: " + (result.orderId || order.orderId) + "\n\nDelivery details save ho gayi hain.");
+      alert("Order has been placed successfully.\n\nOrder ID: " + (result.orderId || order.orderId) + "\n\nDelivery details have been saved.");
       location.href = "orders.html";
 
     } catch (err) {
       msg.style.color = "#dc2626";
-      msg.textContent = err.message || "Order place nahi ho paya.";
+      msg.textContent = err.message || "The order could not be placed.";
       btn.disabled = false;
       btn.textContent = "Place Order";
     }
