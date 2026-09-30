@@ -31,17 +31,17 @@
 <main class="login-wrap">
 <div class="form-card login-card">
   <h1>Customer Login</h1>
-  <p class="muted">Apne order details dekhne ke liye login karein.</p>
+  <p class="muted">Log in to view your order details.</p>
 
   <div class="login-note">
-    <b>Note:</b> Admin account se yahan login nahi karna hai.
-    Admin login ke liye <b>Admin Login</b> button use karein.
+    <b>Note:</b> Do not log in here using the admin account.
+    For admin login <b>Admin Login</b> Use the button.
   </div>
 
   <form id="customerForm">
     <label>Mobile / Email</label>
     <input id="identity" class="input" required autocomplete="username"
-           placeholder="10 digit mobile ya email">
+           placeholder="10-digit mobile number or email">
 
     <br><br>
 
@@ -114,7 +114,7 @@ document.getElementById('customerForm').addEventListener('submit', async functio
     localStorage.setItem('rs_last_order',JSON.stringify(result.order));
 
     msg.className='success';
-    msg.textContent='Order mil gaya. Opening My Orders...';
+    msg.textContent='Order received. Opening My Orders...';
 
     setTimeout(()=>location.href='orders.html',500);
 
