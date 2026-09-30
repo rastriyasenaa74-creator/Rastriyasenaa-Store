@@ -45,7 +45,7 @@ function renderCart() {
 
 document.getElementById("checkoutBtn").addEventListener("click", function() {
   if (!getCart().length) {
-    alert("Pehle product cart me add karein.");
+    alert("First, add the product to the cart.");
     return;
   }
   location.href = "checkout.html";
