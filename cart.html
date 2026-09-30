@@ -22,7 +22,7 @@ function renderCart() {
   const el = document.getElementById("cart");
 
   if (!c.length) {
-    el.innerHTML = '<div class="empty"><h3>Your cart is empty</h3><p class="muted">Pehle koi product cart me add karein.</p><a class="btn btn-dark" href="products.html">Continue Shopping</a></div>';
+    el.innerHTML = '<div class="empty"><h3>Your cart is empty</h3><p class="muted">First, add a product to the cart.</p><a class="btn btn-dark" href="products.html">Continue Shopping</a></div>';
     document.getElementById("subtotal").textContent = "₹0";
     document.getElementById("total").textContent = "₹0";
     document.getElementById("checkoutBtn").disabled = true;
