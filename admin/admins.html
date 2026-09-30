@@ -39,7 +39,7 @@
 
 <main class="admin-main">
 <div class="admin-top">
-<div><h1 style="margin:0">Admin Management</h1><span class="muted">Only Super Admin can manage admins</span></div>
+<div><h1 style="margin:0">Admin Management</h1><span class="muted"></span></div>
 <div>
 <button class="btn btn-outline" id="refreshBtn">↻ Refresh</button>
 <button class="btn btn-dark" onclick="adminLogout()">Logout</button>
@@ -124,7 +124,7 @@ async function loadAdmins(){
       </tr>`;
     }).join('');
   }catch(err){
-    adminRows.innerHTML='<tr><td colspan="6" class="empty">Admin list load nahi ho paayi.</td></tr>';
+    adminRows.innerHTML='<tr><td colspan="6" class="empty">The admin list could not be loaded.</td></tr>';
     messageEl.innerHTML='<div class="error-box"><b>Error:</b> '+esc(err.message)+'</div>';
   }
 }
@@ -138,7 +138,7 @@ async function toggleAdmin(username,active){
 }
 
 async function deleteAdmin(username){
-  if(!confirm('WARNING: '+username+' ko permanently delete karna hai?')) return;
+  if(!confirm('WARNING: '+username+' Do you want to delete it permanently?')) return;
   try{
     await apiPost({action:'deleteAdmin',token:adminToken(),username});
     await loadAdmins();
@@ -153,7 +153,7 @@ document.getElementById('form').onsubmit=async e=>{
   const permissions=[];
   if(document.getElementById('permProducts').checked) permissions.push('products');
   if(document.getElementById('permOrders').checked) permissions.push('orders');
-  if(!permissions.length){msg.textContent='Kam se kam ek permission select karein.';return;}
+  if(!permissions.length){msg.textContent='Select at least one permission.';return;}
   msg.textContent='Creating...';
   try{
     await apiPost({
